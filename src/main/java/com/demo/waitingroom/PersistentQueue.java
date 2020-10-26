@@ -6,32 +6,30 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-@Qualifier("persistent")
-public class PersistentWaitingRoom implements WaitingRoom<Patient> {
+@Component
+public class PersistentQueue<T> implements EditableQueue<T> {
 
-	private NodeRepository nodeRepo;
+	private NodeRepository<T> nodeRepo;
 
-	public PersistentWaitingRoom(NodeRepository patientRepo) {
+	public PersistentQueue(NodeRepository<T> patientRepo) {
 		this.nodeRepo = patientRepo;
 	}
 
 	@Override
-	public List<Patient> getAll() {
+	public List<T> getAll() {
 		return nodeRepo.findByOrderByPosition()
 				.stream()
-				.map(node -> node.getPatient())
+				.map(node -> node.getValue())
 				.collect(Collectors.toList());
 	}
 
 	@Override
 	@Transactional
-	public Patient enqueue(Patient patient) {
-		Node node = new Node(patient);
-		Optional<Node> lastNode = nodeRepo.findByLastTrue();
+	public T enqueue(T element) {
+		Node<T> node = new Node<>(element);
+		Optional<Node<T>> lastNode = nodeRepo.findByLastTrue();
 		int newPosition = 0;
 		if (lastNode.isPresent()) {
 			newPosition = lastNode.get().getPosition() + 1;
@@ -41,28 +39,28 @@ public class PersistentWaitingRoom implements WaitingRoom<Patient> {
 		}
 		node.setPosition(newPosition);
 		node.setLast(true);
-		return nodeRepo.save(node).getPatient();
+		return nodeRepo.save(node).getValue();
 	}
 
 	@Override
 	@Transactional
-	public Optional<Patient> dequeue() {
+	public Optional<T> dequeue() {
 		if (size() == 0) {
 			return Optional.empty();
 		}
-		Optional<Node> first = nodeRepo.findByFirstTrue();
-		Optional<Node> second = nodeRepo.findByPosition(first.get().getPosition() + 1);
+		Optional<Node<T>> first = nodeRepo.findByFirstTrue();
+		Optional<Node<T>> second = nodeRepo.findByPosition(first.get().getPosition() + 1);
 		if (second.isPresent()) {
 			second.get().setFirst(true);
 		}
 		nodeRepo.deleteById(first.get().getId());
-		return Optional.of(first.get().getPatient());
+		return Optional.of(first.get().getValue());
 	}
 
 	@Override
 	@Transactional
-	public void move(Patient patient, int delta) {
-		Node toMove = nodeRepo.findByPatient(patient).get();
+	public void move(T element, int delta) {
+		Node<T> toMove = nodeRepo.findByValue(element).get();
 		int newPosition = toMove.getPosition() - delta;
 		int next = delta > 0 ? toMove.getPosition() - 1 : toMove.getPosition() + 1;
 		int start, end = 0;
@@ -73,14 +71,14 @@ public class PersistentWaitingRoom implements WaitingRoom<Patient> {
 			start = next;
 			end = newPosition;
 		}
-		for (Node p : nodeRepo.findAllByPositionBetween(start, end)) {
+		for (Node<T> p : nodeRepo.findAllByPositionBetween(start, end)) {
 			if (delta > 0) {
-				// swap head with toMove
+				// swap head with node to move
 				if (p.isFirst()) {
 					p.setFirst(false);
 					toMove.setFirst(true);
 				}
-				// swap tail with next
+				// swap tail with node to move
 				if (toMove.isLast() && p.getPosition() == next) {
 					toMove.setLast(false);
 					p.setLast(true);
@@ -98,6 +96,7 @@ public class PersistentWaitingRoom implements WaitingRoom<Patient> {
 			p.setPosition(delta > 0 ? p.getPosition() + 1 : p.getPosition() - 1);
 		}
 		toMove.setPosition(newPosition);
+
 	}
 
 	@Override

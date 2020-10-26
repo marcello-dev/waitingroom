@@ -5,17 +5,17 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-interface NodeRepository extends JpaRepository<Node, Long> {
+interface NodeRepository<T> extends JpaRepository<Node<T>, Long> {
 
-	List<Node> findByOrderByPosition();
+	List<Node<T>> findByOrderByPosition();
 
-	Optional<Node> findByPosition(int position);
+	Optional<Node<T>> findByPosition(int position);
 	
-	Optional<Node> findByPatient(Patient patient);
+	Optional<Node<T>> findByValue(T value);
 
-	Optional<Node> findByFirstTrue();
+	Optional<Node<T>> findByFirstTrue();
 	
-	Optional<Node> findByLastTrue();
+	Optional<Node<T>> findByLastTrue();
 	
-	List<Node> findAllByPositionBetween(int start, int end);
+	List<Node<T>> findAllByPositionBetween(int start, int end);
 }
