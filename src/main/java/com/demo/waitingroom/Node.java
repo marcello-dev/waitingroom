@@ -16,19 +16,17 @@ import lombok.ToString;
 @NoArgsConstructor
 @Entity
 @ToString
-public class WaitingPatient {
+public class Node {
 	@Id
 	@GeneratedValue
 	private Long id;
 	@OneToOne(cascade=CascadeType.PERSIST)
 	private Patient patient;
 	private int position;
-	// Head
 	private boolean first;
-	// Tail
 	private boolean last;
 
-	public WaitingPatient(Patient patient) {
+	public Node(Patient patient) {
 		this.patient = patient;
 		this.position = -1;
 	}

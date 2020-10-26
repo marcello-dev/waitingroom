@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class WaitingRoomServiceTest {
+public class PersistentWaitingRoomTest {
 
 	@Autowired
 	@Qualifier("persistent")
