@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
@@ -50,7 +49,7 @@ public class WaitingRoomServiceTest {
 		assertEquals("p4", waitingRoom.removePatient().get().getName());
 		assertTrue(waitingRoom.size() == 0);
 	}
-	
+
 	@Test
 	public void moveTest2() {
 		waitingRoom.addPatient(new Patient("p1"));
@@ -63,7 +62,7 @@ public class WaitingRoomServiceTest {
 		waitingRoom.move(p3, 2);
 		// Move p4 down by 2 position
 		waitingRoom.move(p4, -1);
-		
+
 		assertEquals("p3", waitingRoom.removePatient().get().getName());
 		assertEquals("p1", waitingRoom.removePatient().get().getName());
 		assertEquals("p2", waitingRoom.removePatient().get().getName());
@@ -71,7 +70,7 @@ public class WaitingRoomServiceTest {
 		assertEquals("p4", waitingRoom.removePatient().get().getName());
 		assertTrue(waitingRoom.size() == 0);
 	}
-	
+
 	@Test
 	public void moveTest3() {
 		waitingRoom.addPatient(new Patient("p1"));
@@ -84,7 +83,7 @@ public class WaitingRoomServiceTest {
 		assertEquals("p2", waitingRoom.removePatient().get().getName());
 		assertTrue(waitingRoom.size() == 0);
 	}
-	
+
 	@Test
 	public void moveTest4() {
 		waitingRoom.addPatient(new Patient("p1"));
@@ -94,7 +93,7 @@ public class WaitingRoomServiceTest {
 
 		waitingRoom.removePatient();
 		waitingRoom.move(p2, -1);
-		
+
 		assertEquals("p3", waitingRoom.removePatient().get().getName());
 		assertEquals("p2", waitingRoom.removePatient().get().getName());
 		assertEquals("p4", waitingRoom.removePatient().get().getName());
@@ -104,14 +103,14 @@ public class WaitingRoomServiceTest {
 	@Test
 	public void stressTest() {
 		int n = 1000;
-		
+
 		long startTime = System.nanoTime();
 		for (long i = 1; i < n; i++) {
 			waitingRoom.addPatient(new Patient("p" + i));
 		}
 		long endTime = System.nanoTime();
 		System.out.format("Enqueue %d time: %d ms%n", n, (endTime - startTime) / 1000000);
-		
+
 		startTime = System.nanoTime();
 		for (long i = 1; i < n; i++) {
 			waitingRoom.removePatient();

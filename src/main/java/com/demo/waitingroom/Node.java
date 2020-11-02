@@ -1,7 +1,9 @@
 package com.demo.waitingroom;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
@@ -23,8 +25,6 @@ public class Node<T> {
 	@OneToOne(cascade = CascadeType.PERSIST, targetEntity = Patient.class)
 	private T value;
 	private int position;
-	private boolean first;
-	private boolean last;
 
 	public Node(T value) {
 		this.value = value;

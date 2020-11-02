@@ -1,17 +1,24 @@
 package com.demo.waitingroom;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PersistentQueue<T> implements EditableQueue<T> {
 
 	private NodeRepository<T> nodeRepo;
+	private final static int POSITION_GAP = 100;
 
 	public PersistentQueue(NodeRepository<T> patientRepo) {
 		this.nodeRepo = patientRepo;
@@ -27,76 +34,55 @@ public class PersistentQueue<T> implements EditableQueue<T> {
 
 	@Override
 	@Transactional
-	public T enqueue(T element) {
-		Node<T> node = new Node<>(element);
-		Optional<Node<T>> lastNode = nodeRepo.findByLastTrue();
-		int newPosition = 0;
-		if (lastNode.isPresent()) {
-			newPosition = lastNode.get().getPosition() + 1;
-			lastNode.get().setLast(false);
-		} else {
-			node.setFirst(true);
-		}
+	public T enqueue(T value) {
+		Objects.requireNonNull(value);
+		Node<T> node = new Node<>(value);
+		Optional<Node<T>> lastNode = nodeRepo.findTopByOrderByPositionDesc();
+		int newPosition = lastNode.isPresent() ? lastNode.get().getPosition() + POSITION_GAP : POSITION_GAP;
 		node.setPosition(newPosition);
-		node.setLast(true);
 		return nodeRepo.save(node).getValue();
 	}
 
 	@Override
 	@Transactional
 	public Optional<T> dequeue() {
-		if (size() == 0) {
-			return Optional.empty();
+		Optional<Node<T>> firstNode = nodeRepo.findTopByOrderByPosition();
+		if(firstNode.isPresent()) {
+			nodeRepo.deleteById(firstNode.get().getId());
+			return Optional.of(firstNode.get().getValue());
 		}
-		Optional<Node<T>> first = nodeRepo.findByFirstTrue();
-		Optional<Node<T>> second = nodeRepo.findByPosition(first.get().getPosition() + 1);
-		if (second.isPresent()) {
-			second.get().setFirst(true);
-		}
-		nodeRepo.deleteById(first.get().getId());
-		return Optional.of(first.get().getValue());
+		return Optional.empty();
 	}
 
 	@Override
 	@Transactional
-	public void move(T element, int delta) {
-		Node<T> toMove = nodeRepo.findByValue(element).get();
-		int newPosition = toMove.getPosition() - delta;
-		int next = delta > 0 ? toMove.getPosition() - 1 : toMove.getPosition() + 1;
-		int start, end = 0;
-		if (delta > 0) {
-			start = newPosition;
-			end = next;
-		} else {
-			start = next;
-			end = newPosition;
+	public void move(T value, int delta) {
+		Objects.requireNonNull(value);
+		Optional<Node<T>> optionalNode = nodeRepo.findByValue(value);
+		if(optionalNode.isEmpty()) {
+			throw new NoSuchElementException("Value not found in the queue");
 		}
-		for (Node<T> p : nodeRepo.findAllByPositionBetween(start, end)) {
-			if (delta > 0) {
-				// swap head with node to move
-				if (p.isFirst()) {
-					p.setFirst(false);
-					toMove.setFirst(true);
-				}
-				// swap tail with node to move
-				if (toMove.isLast() && p.getPosition() == next) {
-					toMove.setLast(false);
-					p.setLast(true);
-				}
+		Node<T> toMove = optionalNode.get();
+		int newPosition = 0;
+		if(delta>0) {
+			List<Node<T>> nodes = nodeRepo.findAllByPositionLessThan(toMove.getPosition(), PageRequest.of(0, delta+1,Sort.by("position").ascending()));
+			if(nodes.size()<delta+1) {
+				newPosition = nodes.get(0).getPosition() / 2;
 			} else {
-				if (p.isLast()) {
-					p.setLast(false);
-					toMove.setLast(true);
-				}
-				if (toMove.isFirst() && p.getPosition() == next) {
-					toMove.setFirst(false);
-					p.setFirst(true);
-				}
+				newPosition = (nodes.get(0).getPosition() + nodes.get(1).getPosition()) / 2;
+				// TODO handle re-balancing
 			}
-			p.setPosition(delta > 0 ? p.getPosition() + 1 : p.getPosition() - 1);
+		} else {
+			delta = Math.abs(delta);
+			List<Node<T>> nodes = nodeRepo.findAllByPositionGreaterThan(toMove.getPosition(), PageRequest.of(0, delta+1,Sort.by("position").descending()));
+			if(nodes.size()<delta+1) {
+				newPosition = nodes.get(0).getPosition() + POSITION_GAP;
+			} else {
+				newPosition = (nodes.get(0).getPosition() + nodes.get(1).getPosition()) / 2;
+				// TODO handle re-balancing
+			}
 		}
 		toMove.setPosition(newPosition);
-
 	}
 
 	@Override
