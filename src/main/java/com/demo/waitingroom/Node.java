@@ -8,6 +8,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
