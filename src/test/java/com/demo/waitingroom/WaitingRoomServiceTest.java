@@ -14,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class WaitingRoomServiceTest {
 
 	@Autowired
-	private WaitingRoom waitingRoom;
+	private WaitingRoomServ waitingRoom;
 
 	@BeforeEach
 	public void clearRoom() {
