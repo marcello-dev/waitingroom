@@ -15,13 +15,14 @@ import lombok.ToString;
 @NoArgsConstructor
 @Entity
 @ToString
-public class Element {
+public class TextElement {
 	@Id
 	@GeneratedValue
 	private Long id;
 	private String data;
+	private String dataType;
 	
-	public Element(String data) {
+	public TextElement(String data) {
 		this.data = data;
 	}
 }

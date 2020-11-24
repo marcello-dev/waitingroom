@@ -1,13 +1,21 @@
 package com.demo.waitingroom;
 
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Service
 public class WaitingRoomServiceImpl implements WaitingRoomServiceI{
+	private final static int POSITION_GAP = 100;
+	private final WaitingRoomRepository wrRepo;
+	private final NNodeRepository nodeRepo;
 
-	private WaitingRoomRepository wrRepo;
-	private NNodeRepository nodeRepo;
+	public WaitingRoomServiceImpl(WaitingRoomRepository wrRepo, NNodeRepository nodeRepo){
+		this.wrRepo=wrRepo;
+		this.nodeRepo=nodeRepo;
+	}
 	
 	@Override
 	public WaitingRoom create(String name) {
@@ -15,25 +23,29 @@ public class WaitingRoomServiceImpl implements WaitingRoomServiceI{
 	}
 
 	@Override
-	public Element enqueue(Long id, Element el) {
+	public TextElement enqueue(Long id, TextElement el) {
 		Objects.requireNonNull(el);
 		NNode node = new NNode(el);
-//		Optional<Node> lastNode = nodeRepo.findTopByOrderByPositionDesc();
-//		int newPosition = lastNode.isPresent() ? lastNode.get().getPosition() + POSITION_GAP : POSITION_GAP;
-//		node.setPosition(newPosition);
-//		return nodeRepo.save(node).getValue();
-		
-		return null;
+		WaitingRoom wr = wrRepo.findById(id).get();
+		Optional<NNode> lastNode = nodeRepo.findTopByWaitingRoomIdOrderByPositionDesc(id);
+		int newPosition = lastNode.map(n -> n.getPosition() + POSITION_GAP).orElse(POSITION_GAP);
+		node.setPosition(newPosition);
+		node.setWaitingRoom(wr);
+		return nodeRepo.save(node).getValue();
 	}
 
 	@Override
-	public Element dequeue(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+	public Optional<TextElement> dequeue(Long id) {
+		Optional<NNode> firstNode = nodeRepo.findTopByWaitingRoomIdOrderByPosition(id);
+		if(firstNode.isPresent()) {
+			nodeRepo.deleteById(firstNode.get().getId());
+			return Optional.of(firstNode.get().getValue());
+		}
+		return Optional.empty();
 	}
 
 	@Override
-	public List<Element> getAllElements(Long id) {
+	public List<TextElement> getAllElements(Long id) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -46,8 +58,7 @@ public class WaitingRoomServiceImpl implements WaitingRoomServiceI{
 
 	@Override
 	public void delete(Long id) {
-		// TODO Auto-generated method stub
-		
+		wrRepo.deleteById(id);
 	}
 
 }

@@ -59,7 +59,7 @@ public class PersistentQueue<T> implements EditableQueue<T> {
 	public void move(T value, int delta) {
 		Objects.requireNonNull(value);
 		Optional<Node<T>> optionalNode = nodeRepo.findByValue(value);
-		if(optionalNode.isEmpty()) {
+		if(!optionalNode.isPresent()) {
 			throw new NoSuchElementException("Value not found in the queue");
 		}
 		Node<T> toMove = optionalNode.get();

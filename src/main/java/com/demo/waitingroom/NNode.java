@@ -23,13 +23,13 @@ public class NNode {
 	@GeneratedValue
 	private Long id;
 	@OneToOne(cascade = CascadeType.PERSIST)
-	private Element value;
+	private TextElement value;
 	@ManyToOne
     @JoinColumn(name="waiting_room_id", nullable=false)
     private WaitingRoom waitingRoom;
 	private int position;
 
-	public NNode(Element value) {
+	public NNode(TextElement value) {
 		this.value = value;
 		this.position = -1;
 	}

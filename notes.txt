@@ -2,6 +2,7 @@ Queue:
 - create: POST /waiting-room
 - getAll waiting rooms: GET /waiting-room
 - delete: DELETE /waiting-room/{id}
+
 - enqueue: POST /waiting-room/{id}/enqueue
 - dequeue: GET /waiting-room/{id}/dequeue
 - move: PUT /waiting-room/{id}  json with /{el-id}/{positions}

@@ -1,5 +1,6 @@
 package com.demo.waitingroom;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -15,7 +16,6 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Entity
 @ToString
 public class WaitingRoom {
@@ -25,8 +25,17 @@ public class WaitingRoom {
 	private String name;
 	@OneToMany(mappedBy="waitingRoom")
 	private List<NNode> nodes;
-	
+
+	public WaitingRoom(){
+		nodes=new ArrayList<>();
+	}
+
 	public WaitingRoom(String name) {
-		this.name=name;
+		nodes = new ArrayList<>();
+		this.name = name;
+	}
+
+	public void addNode(NNode node){
+		nodes.add(node);
 	}
 }
