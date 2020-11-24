@@ -26,9 +26,17 @@ public class WaitingRoomServiceImpl implements WaitingRoomServiceI{
 	public TextElement enqueue(Long id, TextElement el) {
 		Objects.requireNonNull(el);
 		NNode node = new NNode(el);
-		WaitingRoom wr = wrRepo.findById(id).get();
-		Optional<NNode> lastNode = nodeRepo.findTopByWaitingRoomIdOrderByPositionDesc(id);
-		int newPosition = lastNode.map(n -> n.getPosition() + POSITION_GAP).orElse(POSITION_GAP);
+		Optional<NNode> lastNodeOp = nodeRepo.findTopByWaitingRoomIdOrderByPositionDesc(id);
+		int newPosition = 0;
+		WaitingRoom wr = null;
+		if(lastNodeOp.isPresent()) {
+			NNode lastNode = lastNodeOp.get();
+			newPosition = lastNode.getPosition() + POSITION_GAP;
+			wr = lastNode.getWaitingRoom();
+		} else {
+			newPosition = POSITION_GAP;
+			wr = wrRepo.findById(id).get();
+		}
 		node.setPosition(newPosition);
 		node.setWaitingRoom(wr);
 		return nodeRepo.save(node).getValue();
