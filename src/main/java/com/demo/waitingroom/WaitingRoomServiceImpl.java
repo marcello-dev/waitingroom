@@ -1,10 +1,14 @@
 package com.demo.waitingroom;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class WaitingRoomServiceImpl implements WaitingRoomServiceI{
@@ -54,14 +58,38 @@ public class WaitingRoomServiceImpl implements WaitingRoomServiceI{
 
 	@Override
 	public List<TextElement> getAllElements(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		return nodeRepo.findAllByWaitingRoomId(id)
+				.stream().map(n->n.getValue())
+				.collect(Collectors.toList());
 	}
 
 	@Override
-	public void move(Long id, Long elementId, int position) {
-		// TODO Auto-generated method stub
-		
+	public void move(Long id, Long elementId, int delta) {
+		Optional<NNode> optionalNode = nodeRepo.findByValueId(elementId);
+		if(!optionalNode.isPresent()) {
+			throw new NoSuchElementException("Value not found in the queue");
+		}
+		NNode toMove = optionalNode.get();
+		int newPosition = 0;
+		if(delta>0) {
+			List<NNode> nodes = nodeRepo.findAllByWaitingRoomIdAndPositionLessThan(id, toMove.getPosition(), PageRequest.of(0, delta+1,Sort.by("position").ascending()));
+			if(nodes.size()<delta+1) {
+				newPosition = nodes.get(0).getPosition() / 2;
+			} else {
+				newPosition = (nodes.get(0).getPosition() + nodes.get(1).getPosition()) / 2;
+				// TODO handle re-balancing
+			}
+		} else {
+			delta = Math.abs(delta);
+			List<NNode> nodes = nodeRepo.findAllByWaitingRoomIdAndPositionGreaterThan(id, toMove.getPosition(), PageRequest.of(0, delta+1,Sort.by("position").descending()));
+			if(nodes.size()<delta+1) {
+				newPosition = nodes.get(0).getPosition() + POSITION_GAP;
+			} else {
+				newPosition = (nodes.get(0).getPosition() + nodes.get(1).getPosition()) / 2;
+				// TODO handle re-balancing
+			}
+		}
+		toMove.setPosition(newPosition);
 	}
 
 	@Override

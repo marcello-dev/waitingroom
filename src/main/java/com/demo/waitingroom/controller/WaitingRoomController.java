@@ -39,6 +39,12 @@ public class WaitingRoomController {
 		logger.info("Get all waiting rooms");
 		return wrRepo.findAll();
 	}
+	
+	@GetMapping("/{id}")
+	public List<TextElement> getAllElements(@PathVariable Long id){
+		logger.info("Get all waiting rooms");
+		return waitingRoomService.getAllElements(id);
+	}
 
 	@DeleteMapping("/{id}")
 	public void deleteWaitingRoom(@PathVariable Long id){
@@ -57,5 +63,11 @@ public class WaitingRoomController {
 	public TextElement dequeue(@PathVariable Long id) {
 		logger.info("received dequeue");
 		return waitingRoomService.dequeue(id).orElse(new TextElement("not found"));
+	}
+	
+	@PutMapping(value = "/{id}/{elementId}/{delta}")
+	public void move(@PathVariable Long id, @PathVariable Long elementId, @PathVariable int delta) {
+		logger.info("received dequeue");
+		waitingRoomService.move(id, elementId, delta);
 	}
 }
